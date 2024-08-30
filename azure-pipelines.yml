@@ -79,14 +79,12 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-              overrides: |
-                apiVersion: v1
-                kind: Service
-                spec:
-                  ports:
-                    - port: 8080
-                      targetPort: 8080
-                      protocol: TCP
+              ports: '8080:8080' # Set the correct port here
+
+          - script: |
+              kubectl expose deployment my-app-deployment --type=LoadBalancer --name=my-app-service --port=8080 --target-port=8080
+            displayName: 'Expose service on port 8080'
+
 - stage: PostDeploymentValidation
   displayName: Post-Deployment Validation
   dependsOn: Deploy
