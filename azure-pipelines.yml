@@ -62,7 +62,7 @@ stages:
           - script: |
               kubectl create namespace test || true
               kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n test
-              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n test
+              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n test || true
             displayName: 'Deploy to Test Namespace'
   
 - stage: DeployProduction
@@ -81,7 +81,7 @@ stages:
           - script: |
               kubectl create namespace production || true
               kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n production
-              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n production
+              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n production || true
             displayName: 'Deploy to Production Namespace'
 
 - stage: PostDeploymentValidation
