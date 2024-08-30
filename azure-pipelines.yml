@@ -74,15 +74,14 @@ stages:
               action: deploy
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
+#                $(Pipeline.Workspace)/manifests/service.yml
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-              ports: '8080:8080' # Set the correct port here
 
           - script: |
-              kubectl expose deployment my-app-deployment --type=LoadBalancer --name=my-app-service --port=8080 --target-port=8080
+              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080
             displayName: 'Expose service on port 8080'
 
 - stage: PostDeploymentValidation
