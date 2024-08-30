@@ -79,7 +79,14 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-
+              overrides: |
+                apiVersion: v1
+                kind: Service
+                spec:
+                  ports:
+                    - port: 8080
+                      targetPort: 8080
+                      protocol: TCP
 - stage: PostDeploymentValidation
   displayName: Post-Deployment Validation
   dependsOn: Deploy
