@@ -24,8 +24,8 @@ stages:
     pool: Default
     steps:
     - script: |
-        chmod +x ./scripts/pre-deploy-validation.sh
-        ./scripts/pre-deploy-validation.sh
+        chmod +x ./pre-deploy-validation.sh
+        ./pre-deploy-validation.sh
       displayName: 'Run Pre-Deployment Validation'
 
 - stage: Build
@@ -89,6 +89,6 @@ stages:
     pool: Default
     steps:
     - script: |
-        chmod +x ./scripts/post-deploy-validation.sh
-        ./scripts/post-deploy-validation.sh
+        chmod +x ./post-deploy-validation.sh
+        ./post-deploy-validation.sh
       displayName: 'Run Post-Deployment Validation'
