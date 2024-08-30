@@ -12,8 +12,6 @@ variables:
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acrsurapureddyswetha1802ec00-auth'
   vmImageName: 'ubuntu-latest'
-  aksResourceGroup: 'aks-test-rg'
-  aksClusterName: 'aks-test-cluster'
 
 stages:
 - stage: PreDeploymentValidation
@@ -62,6 +60,7 @@ stages:
         deploy:
           steps:
           - script: |
+              kubectl create namespace test || true
               kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n test
               kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n test
             displayName: 'Deploy to Test Namespace'
@@ -69,7 +68,7 @@ stages:
 - stage: DeployProduction
   displayName: Deploy to Production Namespace
   dependsOn: DeployTest
-  condition: succeeded()  # Only deploy to production if the test deployment is successful
+  condition: succeeded() 
   jobs:
   - deployment: DeployProduction
     displayName: Deploy to Production
@@ -80,6 +79,7 @@ stages:
         deploy:
           steps:
           - script: |
+              kubectl create namespace production || true
               kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n production
               kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n production
             displayName: 'Deploy to Production Namespace'
