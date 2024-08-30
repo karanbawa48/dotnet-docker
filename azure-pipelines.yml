@@ -14,10 +14,6 @@ variables:
   vmImageName: 'ubuntu-latest'
   aksResourceGroup: 'aks-test-rg'
   aksClusterName: 'aks-test-cluster'
-  testNamespace: 'test'
-  prodNamespace: 'prod'
-  testEnvironment: 'test-environment'
-  prodEnvironment: 'prod-environment'
 
 stages:
 - stage: PreDeploymentValidation
@@ -53,99 +49,44 @@ stages:
     - upload: manifests
       artifact: manifests
 
-- stage: DeployToTest
+- stage: DeployTest
   displayName: Deploy to Test Namespace
   dependsOn: Build
   jobs:
-  - deployment: Deploy
-    displayName: Deploy to Test Namespace
+  - deployment: DeployTest
+    displayName: Deploy to Test
     pool: Default
-    environment: '$(testEnvironment)'
+    environment: 'test'
     strategy:
       runOnce:
         deploy:
           steps:
           - script: |
-              kubectl get namespace $(testNamespace) || kubectl create namespace $(testNamespace)
-            displayName: 'Create Test Namespace if not present'
-
-          - task: KubernetesManifest@1
-            displayName: Create imagePullSecret in Test Namespace
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              namespace: $(testNamespace)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-
-          - task: KubernetesManifest@1
-            displayName: Deploy to Kubernetes Test Namespace
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-              namespace: $(testNamespace)
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-
-          - task: Kubernetes@1
-            displayName: Validate Deployment in Test Namespace
-            inputs:
-              connectionType: 'Kubernetes Service Connection'
-              kubernetesServiceConnection: 'YourKubernetesServiceConnection'
-              namespace: $(testNamespace)
-              command: 'get'
-              arguments: 'pods -l app=dotnetdocker'
-
-          - script: |
-              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --namespace=$(testNamespace) --port=8080 --target-port=8080
-            displayName: 'Expose service in Test Namespace on port 8080'
-
-- stage: DeployToProd
+              kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n test
+              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n test
+            displayName: 'Deploy to Test Namespace'
+  
+- stage: DeployProduction
   displayName: Deploy to Production Namespace
-  dependsOn: DeployToTest
-  condition: succeeded()
+  dependsOn: DeployTest
+  condition: succeeded()  # Only deploy to production if the test deployment is successful
   jobs:
-  - deployment: Deploy
-    displayName: Deploy to Production Namespace
+  - deployment: DeployProduction
+    displayName: Deploy to Production
     pool: Default
-    environment: '$(prodEnvironment)'
+    environment: 'production'
     strategy:
       runOnce:
         deploy:
           steps:
           - script: |
-              kubectl get namespace $(prodNamespace) || kubectl create namespace $(prodNamespace)
-            displayName: 'Create Production Namespace if not present'
-
-          - task: KubernetesManifest@1
-            displayName: Create imagePullSecret in Production Namespace
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              namespace: $(prodNamespace)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-
-          - task: KubernetesManifest@1
-            displayName: Deploy to Kubernetes Production Namespace
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-              namespace: $(prodNamespace)
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-
-          - script: |
-              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --namespace=$(prodNamespace) --port=8080 --target-port=8080
-            displayName: 'Expose service in Production Namespace on port 8080'
+              kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n production
+              kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n production
+            displayName: 'Deploy to Production Namespace'
 
 - stage: PostDeploymentValidation
   displayName: Post-Deployment Validation
-  dependsOn: DeployToProd
+  dependsOn: DeployProduction
   jobs:
   - job: PostValidation
     displayName: Post-Deployment Validation
