@@ -1,7 +1,3 @@
-# Deploy to Azure Kubernetes Service
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
 - main
 
@@ -9,14 +5,13 @@ resources:
 - repo: self
 
 variables:
-
-  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '28635a2a-8fd9-4b26-bc88-751e4defe742'
   imageRepository: 'dotnetdocker'
   containerRegistry: 'acrsurapureddyswetha.azurecr.io'
   dockerfilePath: './samples/aspnetapp/Dockerfile'
   tag: '$(Build.BuildId)'
-  imagePullSecret: 'acrsurapureddyswetha68436326-auth'
+  imagePullSecret: 'acrsurapureddyswetha1802ec00-auth'
+  vmImageName: 'ubuntu-latest'
 
 stages:
 - stage: PreDeploymentValidation
@@ -67,7 +62,6 @@ stages:
           - script: |
               kubectl create namespace test || true
               kubectl apply -f $(Pipeline.Workspace)/manifests/deployment.yml -n test
-              kubectl apply -f $(Pipeline.Workspace)/manifests/service.yml -n test || true
               kubectl expose deployment dotnetdocker --type=LoadBalancer --name=app-service --port=8080 --target-port=8080 -n test || true
             displayName: 'Deploy to Test Namespace'
   
