@@ -1,7 +1,3 @@
-# Deploy to Azure Kubernetes Service
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
 - main
 
@@ -10,17 +6,13 @@ resources:
 
 variables:
 
-  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'f19d5afa-d1b1-4108-963d-651b0259774c'
   imageRepository: 'newimage'
   containerRegistry: 'acrsurapureddyswetha.azurecr.io'
   dockerfilePath: './samples/aspnetapp/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acrsurapureddyswethab302-auth'
-
-  # Agent VM image name
   vmImageName: 'ubuntu-latest'
-
 
 stages:
 - stage: Build
@@ -43,13 +35,12 @@ stages:
     - upload: manifests
       artifact: manifests
 
-- stage: Deploy
-  displayName: Deploy stage
+- stage: DeployTest
+  displayName: Deploy to Test Stage
   dependsOn: Build
-
   jobs:
-  - deployment: Deploy
-    displayName: Deploy
+  - deployment: DeployTest
+    displayName: Deploy to Test
     pool: newpool
     environment: 'test'
     strategy:
@@ -57,7 +48,7 @@ stages:
         deploy:
           steps:
           - task: KubernetesManifest@1
-            displayName: Create imagePullSecret
+            displayName: Create imagePullSecret for Test Namespace
             inputs:
               action: 'createSecret'
               connectionType: 'kubernetesServiceConnection'
@@ -68,7 +59,7 @@ stages:
               dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
 
           - task: KubernetesManifest@1
-            displayName: Deploy to Kubernetes cluster
+            displayName: Deploy to Kubernetes cluster in Test
             inputs:
               action: 'deploy'
               connectionType: 'kubernetesServiceConnection'
@@ -80,3 +71,39 @@ stages:
               containers: '$(containerRegistry)/$(imageRepository):$(tag)'
               imagePullSecrets: '$(imagePullSecret)'
 
+- stage: DeployProd
+  displayName: Deploy to Production Stage
+  dependsOn: DeployTest
+  condition: succeeded()  # Only run if the test deployment succeeds
+  jobs:
+  - deployment: DeployProd
+    displayName: Deploy to Production
+    pool: newpool
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@1
+            displayName: Create imagePullSecret for Prod Namespace
+            inputs:
+              action: 'createSecret'
+              connectionType: 'kubernetesServiceConnection'
+              kubernetesServiceConnection: 'app-cluster-prod'
+              namespace: 'prod'
+              secretType: 'dockerRegistry'
+              secretName: '$(imagePullSecret)'
+              dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
+
+          - task: KubernetesManifest@1
+            displayName: Deploy to Kubernetes cluster in Production
+            inputs:
+              action: 'deploy'
+              connectionType: 'kubernetesServiceConnection'
+              kubernetesServiceConnection: 'app-cluster-prod'
+              namespace: 'prod'
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yml
+                $(Pipeline.Workspace)/manifests/service.yml
+              containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+              imagePullSecrets: '$(imagePullSecret)'
