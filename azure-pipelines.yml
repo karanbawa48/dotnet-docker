@@ -61,6 +61,7 @@ stages:
             inputs:
               action: 'createSecret'
               connectionType: 'kubernetesServiceConnection'
+              kubernetesServiceConnection: 'app-cluster-abc'
               namespace: 'abc'
               secretType: 'dockerRegistry'
               secretName: '$(imagePullSecret)'
@@ -71,6 +72,7 @@ stages:
             inputs:
               action: 'deploy'
               connectionType: 'kubernetesServiceConnection'
+              kubernetesServiceConnection: 'app-cluster-abc'
               namespace: 'abc'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
