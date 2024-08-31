@@ -19,7 +19,7 @@ stages:
   jobs:
   - job: PreValidation
     displayName: Pre-Deployment Validation
-    pool: Default
+    pool: newpool
     steps:
     - script: |
         chmod +x ./pre-deploy-validation.sh
@@ -126,7 +126,7 @@ stages:
   jobs:
   - job: PostValidation
     displayName: Post-Deployment Validation
-    pool: Default
+    pool: newpool
     steps:
     - script: |
         chmod +x ./post-deploy-validation.sh
