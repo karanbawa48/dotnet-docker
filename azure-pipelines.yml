@@ -5,7 +5,6 @@ resources:
 - repo: self
 
 variables:
-
   dockerRegistryServiceConnection: 'f19d5afa-d1b1-4108-963d-651b0259774c'
   imageRepository: 'newimage'
   containerRegistry: 'acrsurapureddyswetha.azurecr.io'
@@ -15,8 +14,21 @@ variables:
   vmImageName: 'ubuntu-latest'
 
 stages:
+- stage: PreDeploymentValidation
+  displayName: Pre-Deployment Validation
+  jobs:
+  - job: PreValidation
+    displayName: Pre-Deployment Validation
+    pool: Default
+    steps:
+    - script: |
+        chmod +x ./pre-deploy-validation.sh
+        ./pre-deploy-validation.sh
+      displayName: 'Run Pre-Deployment Validation'
+
 - stage: Build
   displayName: Build stage
+  dependsOn: PreDeploymentValidation
   jobs:
   - job: Build
     displayName: Build
@@ -74,7 +86,7 @@ stages:
 - stage: DeployProd
   displayName: Deploy to Production Stage
   dependsOn: DeployTest
-  condition: succeeded()  # Only run if the test deployment succeeds
+  condition: succeeded()
   jobs:
   - deployment: DeployProd
     displayName: Deploy to Production
@@ -107,3 +119,16 @@ stages:
                 $(Pipeline.Workspace)/manifests/service.yml
               containers: '$(containerRegistry)/$(imageRepository):$(tag)'
               imagePullSecrets: '$(imagePullSecret)'
+
+- stage: PostDeploymentValidation
+  displayName: Post-Deployment Validation
+  dependsOn: DeployProd
+  jobs:
+  - job: PostValidation
+    displayName: Post-Deployment Validation
+    pool: Default
+    steps:
+    - script: |
+        chmod +x ./post-deploy-validation.sh
+        ./post-deploy-validation.sh
+      displayName: 'Run Post-Deployment Validation'
