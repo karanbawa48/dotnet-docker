@@ -28,7 +28,7 @@ stages:
   jobs:
   - job: Build
     displayName: Build
-    pool: Default
+    pool: newpool
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -50,20 +50,20 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    pool: Default
+    pool: newpool
     environment: 'karanbawa48dotnetdocker-4257.abc'
     strategy:
       runOnce:
         deploy:
           steps:
-          - task: KubernetesManifest@0
+          - task: KubernetesManifest@1
             displayName: Create imagePullSecret
             inputs:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
-          - task: KubernetesManifest@0
+          - task: KubernetesManifest@1
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
