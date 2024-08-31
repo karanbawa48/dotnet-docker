@@ -14,7 +14,7 @@ variables:
   dockerRegistryServiceConnection: '64cf61e1-d293-4f8e-b8f9-1866356f3ac1'
   imageRepository: 'dotnetdocker'
   containerRegistry: 'acrsurapureddyswetha.azurecr.io'
-  dockerfilePath: '**/Dockerfile'
+  dockerfilePath: './samples/aspnetapp/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acrsurapureddyswetha2137ff96-auth'
 
