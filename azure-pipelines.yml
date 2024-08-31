@@ -72,7 +72,7 @@ stages:
             displayName: Create imagePullSecret for Test Namespace
             inputs:
               connectionType: 'kubernetesServiceConnection'
-              kubernetesServiceConnection: 'app-cluster-default'
+              kubernetesServiceConnection: 'app-cluster-test'
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
@@ -101,7 +101,7 @@ stages:
             displayName: Create imagePullSecret for Production Namespace
             inputs:
               connectionType: 'kubernetesServiceConnection'
-              kubernetesServiceConnection: 'app-cluster-default'
+              kubernetesServiceConnection: 'app-cluster-prod'
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
