@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: newimage 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newimage
+  template:
+    metadata:
+      labels:
+        app: newimage 
+    spec:
+      containers:
+        - name: newimage 
+          image: acrsurapureddyswetha.azurecr.io/newimage
+          ports:
+          - containerPort: 8080
